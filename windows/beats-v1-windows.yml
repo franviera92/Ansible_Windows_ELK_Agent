@@ -1,0 +1,191 @@
+---
+- hosts: windows
+  tasks:
+  - name: run netstat and return Ethernet stats
+    win_command: netstat -e
+    register: netstat
+  - debug: var=netstat
+  - name: Install metricbeat
+    win_chocolatey:
+      name: metricbeat
+      state: present
+  - name: Install auditbeat,filebeat
+    win_chocolatey:
+      name: auditbeat,filebeat
+      state: present
+############### Config Auditbeat ####################  
+  - name: Add tags to agent auditbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+      regexp: '^tags\: \[\"service-X\"\, \"web-tier\"\]'
+      insertafter: '^#tags:'
+      line: 'tags: ["auditbeat"]'
+      state: present
+      backup: yes
+  - name: Enable setup dashboard  agent auditbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+      regexp: '^setup.dashboards.enabled: false'
+      insertafter: '^#setup.dashboards.enabled: false'
+      line: 'setup.dashboards.enabled: true'
+      backup: yes
+  - name: Config host dashboard auditbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+      regexp: '^host: "localhost:5601"'
+      insertafter: '^  #host: "localhost:5601"'
+      line: '  host: "10.10.10.245:5601"'
+      backup: yes
+  - name: "Replace elasticsearch output [ output.elasticsearch: for #output.elasticsearch: ]"
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+      regexp: 'output.elasticsearch:'
+      line: "#output.elasticsearch:"
+      backup: yes
+  - name: 'Replace host elasticsearch output [ hosts: ["localhost:9200"] for #hosts: ["localhost:9200"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+       regexp: 'hosts\: \[\"localhost:9200\"\]'
+       line: '  #hosts: ["localhost:9200"]'
+       backup: yes
+  - name: "Replace logstash output [ #output.logstash: for output.logstash: ]"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+       regexp: '#output.logstash:'
+       line: "output.logstash:"
+       backup: yes
+  - name: 'Replace host logstash output [ #hosts: ["localhost:5044"] for hosts: ["10.10.10.246:5044","10.10.10.247:5044"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+       regexp: '#hosts\: \[\"localhost:5044\"\]'
+       line: '  hosts: ["10.10.10.246:5044","10.10.10.247:5044"]'
+       backup: yes
+  - name: Config loadbalance 
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\auditbeat\tools\auditbeat.yml
+      regexp: '^hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      insertafter: '^  hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      line: '  loadbalance: true'
+      backup: yes
+  - name: Load template manually Auditbeat
+    win_shell: .\auditbeat.exe setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["10.10.10.245:9200"]'  chdir=C:\\ProgramData\\chocolatey\\lib\\auditbeat\\tools
+  - name: Setup kibana dashboards
+    win_shell: |
+     .\auditbeat.exe setup -e `
+     -E output.logstash.enabled=false `
+     -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
+     -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\auditbeat\\tools
+############### Config Filebeat ######################cd C:\ProgramData\chocolatey\lib\auditbeat\tools 
+  - name: "Active config logs"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: '  enabled: false'
+       line: "  enabled: true"
+       backup: yes
+  - name: "Config reload"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: '  reload.enabled: false'
+       line: "  reload.enabled: true"
+       backup: yes
+  - name: Add tags to agent filebeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+      regexp: '^tags\: \[\"service-X\"\, \"web-tier\"\]'
+      insertafter: '^#tags:'
+      line: 'tags: ["filebeat"]'
+  - name: "Replace setup dashboard"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: 'setup.dashboards.enabled: true'
+       insertafter: '^#setup.dashboards.enabled: false'
+       line: "setup.dashboards.enabled: false"
+       backup: yes
+  - name: Enable setup dashboard  agent filebeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+      regexp: '^setup.dashboards.enabled: false'
+      insertafter: '^#setup.dashboards.enabled: false'
+      line: 'setup.dashboards.enabled: true'
+#    check_mode: yes
+  - name: Config host dashboard filebeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+      regexp: '^host: "localhost:5601"'
+      insertafter: '^  #host: "localhost:5601"'
+      line: '  host: "10.10.10.245:5601"'
+  - name: "Replace elasticsearch output [ output.elasticsearch: for #output.elasticsearch: ]"
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+      regexp: 'output.elasticsearch:'
+      line: "#output.elasticsearch:"
+      backup: yes
+  - name: 'Replace host elasticsearch output [ hosts: ["localhost:9200"] for #hosts: ["localhost:9200"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: 'hosts\: \[\"localhost:9200\"\]'
+       line: '  #hosts: ["localhost:9200"]'
+  - name: "Replace logstash output [ #output.logstash: for output.logstash: ]"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: '#output.logstash:'
+       line: "output.logstash:"
+       backup: yes
+  - name: 'Replace host logstash output [ #hosts: ["localhost:5044"] for hosts: ["10.10.10.246:5044","10.10.10.247:5044"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: '#hosts\: \[\"localhost:5044\"\]'
+       line: '  hosts: ["10.10.10.246:5044","10.10.10.247:5044"]'
+  - name: Config loadbalance 
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+      regexp: '^hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      insertafter: '^  hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      line: '  loadbalance: true'
+############## Config index and dashboards ##########
+  - name: Load template manually filebeat
+    win_shell: .\filebeat.exe setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["10.10.10.245:9200"]'  chdir=C:\\ProgramData\\chocolatey\\lib\\filebeat\\tools
+  - name: Setup kibana dashboards
+    win_shell: |
+     .\filebeat.exe setup -e `
+     -E output.logstash.enabled=false `
+     -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
+     -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\filebeat\\tools
+##################### ALL HOSTS #################
+- hosts: windows
+  tasks:
+  - name: Start Auditbeat
+    win_service:
+      name: auditbeat
+      start_mode: auto
+      state: started
+  - name: Start Filebeat
+    win_service:
+      name: filebeat
+      start_mode: auto
+      state: started
+##################### ALL HOSTS #################
+#- hosts: windows
+#  tasks:
+#  - name: Start beats
+#    shell: echo "Started beats"
+#    notify: 
+#      - Start Auditbeat
+#      - Start Filebeat
+######################################################
+#################### Handlers ########################
+#  handlers:
+  #- name: restart php 
+  #service: name=php state=restarted 
+  #- name: restart apache 
+  #service: name=apache state=restarted
+#  - name: Start Auditbeat
+#    win_service:
+#      name: auditbeat
+#      start_mode: auto
+#      state: started
+#  - name: Start Filebeat
+#    win_service:
+#      name: filebeat
+#      start_mode: auto
+#      state: started
