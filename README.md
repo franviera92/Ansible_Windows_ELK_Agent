@@ -37,8 +37,8 @@ winrm enumerate winrm/config/Listener
 
 3. Ejecutamos los playbooks de la siguiente manera
 
-    ansible-playbook -i hosts -b -vvvv beats-v1-windows.yml --extra-vars all
+    ansible-playbook -i hosts -vvvv beats-v1-windows.yml --extra-vars all
 
 Si se han ecriptado las variables debe ejecutarlo de la siguiente manera 
 
-    ansible-playbook -i hosts -b -vvvv beats-v1-windows.yml --extra-vars all --ask-vault-pass
+    ansible-playbook -i hosts -vvvv beats-v1-windows.yml --extra-vars all --ask-vault-pass
