@@ -288,6 +288,30 @@
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\packetbeat\\tools
 ############### Config Winlogbeat ####################  
+  - name: Edit winlogbeat events powershell
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^- name: System'
+      insertafter: '^  - name: System'
+      line: '  - name: Windows PowerShell'
+      state: present
+      backup: yes
+  - name: Edit winlogbeat events Microsoft-Windows-Windows Firewall With Advanced Security/Firewall
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^- name: Windows PowerShell'
+      insertafter: '^  - name: Windows PowerShell'
+      line: '  - name: Microsoft-Windows-Windows Firewall With Advanced Security/Firewall'
+      state: present
+      backup: yes
+  - name: Edit winlogbeat events Microsoft-Windows-PowerShell/Operational
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^file: ${path.home}/module/sysmon/config/winlogbeat-sysmon.js'
+      insertafter: '^          file: ${path.home}/module/sysmon/config/winlogbeat-sysmon.js'
+      line: '  - name: Microsoft-Windows-PowerShell/Operational'
+      state: present
+      backup: yes
   - name: Add tags to agent winlogbeat
     win_lineinfile:
       path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
