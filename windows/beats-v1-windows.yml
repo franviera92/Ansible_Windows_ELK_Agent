@@ -5,13 +5,17 @@
     win_command: netstat -e
     register: netstat
   - debug: var=netstat
-  - name: Install metricbeat
+  - name: Install metricbeat,winlogbeat
     win_chocolatey:
-      name: metricbeat
+      name: metricbeat,winlogbeat
       state: present
-  - name: Install auditbeat,filebeat
+  - name: Install auditbeat,filebeat,packetbeat
     win_chocolatey:
-      name: auditbeat,filebeat
+      name: auditbeat,filebeat,packetbeat
+      state: present
+  - name: Install Sysmon
+    win_chocolatey:
+      name: sysmon
       state: present
 ############### Config Auditbeat ####################  
   - name: Add tags to agent auditbeat
@@ -75,7 +79,7 @@
      -E output.logstash.enabled=false `
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\auditbeat\\tools
-############### Config Filebeat ######################cd C:\ProgramData\chocolatey\lib\auditbeat\tools 
+############### Config Filebeat ###################### 
   - name: "Active config logs"
     win_lineinfile:
        path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
@@ -151,6 +155,138 @@
      -E output.logstash.enabled=false `
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\filebeat\\tools
+############### Config Metricbeat ###################### 
+  - name: "Config reload"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+       regexp: '  reload.enabled: false'
+       line: "  reload.enabled: true"
+       backup: yes
+  - name: Add tags to agent metricbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+      regexp: '^tags\: \[\"service-X\"\, \"web-tier\"\]'
+      insertafter: '^#tags:'
+      line: 'tags: ["metricbeat"]'
+  - name: "Replace setup dashboard"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+       regexp: 'setup.dashboards.enabled: true'
+       insertafter: '^#setup.dashboards.enabled: false'
+       line: "setup.dashboards.enabled: false"
+       backup: yes
+  - name: Enable setup dashboard  agent metricbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+      regexp: '^setup.dashboards.enabled: false'
+      insertafter: '^#setup.dashboards.enabled: false'
+      line: 'setup.dashboards.enabled: true'
+#    check_mode: yes
+  - name: Config host dashboard metricbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+      regexp: '^host: "localhost:5601"'
+      insertafter: '^  #host: "localhost:5601"'
+      line: '  host: "10.10.10.245:5601"'
+  - name: "Replace elasticsearch output [ output.elasticsearch: for #output.elasticsearch: ]"
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+      regexp: 'output.elasticsearch:'
+      line: "#output.elasticsearch:"
+      backup: yes
+  - name: 'Replace host elasticsearch output [ hosts: ["localhost:9200"] for #hosts: ["localhost:9200"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+       regexp: 'hosts\: \[\"localhost:9200\"\]'
+       line: '  #hosts: ["localhost:9200"]'
+  - name: "Replace logstash output [ #output.logstash: for output.logstash: ]"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+       regexp: '#output.logstash:'
+       line: "output.logstash:"
+       backup: yes
+  - name: 'Replace host logstash output [ #hosts: ["localhost:5044"] for hosts: ["10.10.10.246:5044","10.10.10.247:5044"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+       regexp: '#hosts\: \[\"localhost:5044\"\]'
+       line: '  hosts: ["10.10.10.246:5044","10.10.10.247:5044"]'
+  - name: Config loadbalance 
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\metricbeat\tools\metricbeat.yml
+      regexp: '^hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      insertafter: '^  hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      line: '  loadbalance: true'
+############## Config index and dashboards Metricbeat ##########
+  - name: Load template manually metricbeat
+    win_shell: .\metricbeat.exe setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["10.10.10.245:9200"]'  chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
+  - name: Setup kibana dashboards
+    win_shell: |
+     .\metricbeat.exe setup -e `
+     -E output.logstash.enabled=false `
+     -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
+     -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
+############### Config Packetbeat ####################  
+  - name: Add tags to agent packetbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+      regexp: '^tags\: \[\"service-X\"\, \"web-tier\"\]'
+      insertafter: '^#tags:'
+      line: 'tags: ["packetbeat"]'
+      state: present
+      backup: yes
+  - name: Enable setup dashboard  agent packetbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+      regexp: '^setup.dashboards.enabled: false'
+      insertafter: '^#setup.dashboards.enabled: false'
+      line: 'setup.dashboards.enabled: true'
+      backup: yes
+  - name: Config host dashboard packetbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+      regexp: '^host: "localhost:5601"'
+      insertafter: '^  #host: "localhost:5601"'
+      line: '  host: "10.10.10.245:5601"'
+      backup: yes
+  - name: "Replace elasticsearch output [ output.elasticsearch: for #output.elasticsearch: ]"
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+      regexp: 'output.elasticsearch:'
+      line: "#output.elasticsearch:"
+      backup: yes
+  - name: 'Replace host elasticsearch output [ hosts: ["localhost:9200"] for #hosts: ["localhost:9200"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+       regexp: 'hosts\: \[\"localhost:9200\"\]'
+       line: '  #hosts: ["localhost:9200"]'
+       backup: yes
+  - name: "Replace logstash output [ #output.logstash: for output.logstash: ]"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+       regexp: '#output.logstash:'
+       line: "output.logstash:"
+       backup: yes
+  - name: 'Replace host logstash output [ #hosts: ["localhost:5044"] for hosts: ["10.10.10.246:5044","10.10.10.247:5044"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+       regexp: '#hosts\: \[\"localhost:5044\"\]'
+       line: '  hosts: ["10.10.10.246:5044","10.10.10.247:5044"]'
+       backup: yes
+  - name: Config loadbalance 
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
+      regexp: '^hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      insertafter: '^  hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      line: '  loadbalance: true'
+      backup: yes
+  - name: Load template manually packetbeat
+    win_shell: .\packetbeat.exe setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["10.10.10.245:9200"]'  chdir=C:\\ProgramData\\chocolatey\\lib\\packetbeat\\tools
+  - name: Setup kibana dashboards
+    win_shell: |
+     .\packetbeat.exe setup -e `
+     -E output.logstash.enabled=false `
+     -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
+     -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\packetbeat\\tools
 ##################### ALL HOSTS #################
 - hosts: windows
   tasks:
@@ -162,6 +298,26 @@
   - name: Start Filebeat
     win_service:
       name: filebeat
+      start_mode: auto
+      state: started
+  - name: Start Metricbeat
+    win_service:
+      name: metricbeat
+      start_mode: auto
+      state: started
+  - name: Start Packetbeat
+    win_service:
+      name: packetbeat
+      start_mode: auto
+      state: started
+  - name: Start Winlogbeat
+    win_service:
+      name: winlogbeat
+      start_mode: auto
+      state: started
+  - name: Start Sysmon
+    win_service:
+      name: Sysmon64
       start_mode: auto
       state: started
 ##################### ALL HOSTS #################
