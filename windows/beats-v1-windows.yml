@@ -287,6 +287,68 @@
      -E output.logstash.enabled=false `
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\packetbeat\\tools
+############### Config Winlogbeat ####################  
+  - name: Add tags to agent winlogbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^tags\: \[\"service-X\"\, \"web-tier\"\]'
+      insertafter: '^#tags:'
+      line: 'tags: ["winlogbeat"]'
+      state: present
+      backup: yes
+  - name: Enable setup dashboard  agent winlogbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^setup.dashboards.enabled: false'
+      insertafter: '^#setup.dashboards.enabled: false'
+      line: 'setup.dashboards.enabled: true'
+      backup: yes
+  - name: Config host dashboard winlogbeat
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^host: "localhost:5601"'
+      insertafter: '^  #host: "localhost:5601"'
+      line: '  host: "10.10.10.245:5601"'
+      backup: yes
+  - name: "Replace elasticsearch output [ output.elasticsearch: for #output.elasticsearch: ]"
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: 'output.elasticsearch:'
+      line: "#output.elasticsearch:"
+      backup: yes
+  - name: 'Replace host elasticsearch output [ hosts: ["localhost:9200"] for #hosts: ["localhost:9200"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+       regexp: 'hosts\: \[\"localhost:9200\"\]'
+       line: '  #hosts: ["localhost:9200"]'
+       backup: yes
+  - name: "Replace logstash output [ #output.logstash: for output.logstash: ]"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+       regexp: '#output.logstash:'
+       line: "output.logstash:"
+       backup: yes
+  - name: 'Replace host logstash output [ #hosts: ["localhost:5044"] for hosts: ["10.10.10.246:5044","10.10.10.247:5044"]]'
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+       regexp: '#hosts\: \[\"localhost:5044\"\]'
+       line: '  hosts: ["10.10.10.246:5044","10.10.10.247:5044"]'
+       backup: yes
+  - name: Config loadbalance 
+    win_lineinfile:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
+      regexp: '^hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      insertafter: '^  hosts\: \[\"10.10.10.246:5044\"\,\"10.10.10.247:5044\"\]'
+      line: '  loadbalance: true'
+      backup: yes
+  - name: Load template manually winlogbeat
+    win_shell: .\winlogbeat.exe setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["10.10.10.245:9200"]'  chdir=C:\\ProgramData\\chocolatey\\lib\\winlogbeat\\tools
+  - name: Setup kibana dashboards
+    win_shell: |
+     .\winlogbeat.exe setup -e `
+     -E output.logstash.enabled=false `
+     -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
+     -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\winlogbeat\\tools
 ##################### ALL HOSTS #################
 - hosts: windows
   tasks:
