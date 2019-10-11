@@ -13,10 +13,10 @@
     win_chocolatey:
       name: auditbeat,filebeat,packetbeat
       state: present
-  - name: Install Sysmon
-    win_chocolatey:
-      name: sysmon
-      state: present
+#  - name: Install Sysmon
+#    win_chocolatey:
+#      name: sysmon
+#      state: present
 ############### Config Auditbeat ####################  
   - name: Add tags to agent auditbeat
     win_lineinfile:
@@ -377,11 +377,11 @@
       name: winlogbeat
       start_mode: auto
       state: started
-  - name: Start Sysmon
-    win_service:
-      name: Sysmon64
-      start_mode: auto
-      state: started
+#  - name: Start Sysmon
+#    win_service:
+#      name: Sysmon64
+#      start_mode: auto
+#      state: started
 ##################### ALL HOSTS #################
 #- hosts: windows
 #  tasks:
