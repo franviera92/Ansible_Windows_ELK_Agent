@@ -307,8 +307,8 @@
   - name: Edit winlogbeat events Microsoft-Windows-PowerShell/Operational
     win_lineinfile:
       path: C:\ProgramData\chocolatey\lib\winlogbeat\tools\winlogbeat.yml
-      regexp: '^file: ${path.home}/module/sysmon/config/winlogbeat-sysmon.js'
-      insertafter: '^          file: ${path.home}/module/sysmon/config/winlogbeat-sysmon.js'
+      regexp: '^file: \$\{path.home\}\/module\/sysmon\/config\/winlogbeat-sysmon.js'
+      insertafter: '^          file: \$\{path.home\}\/module\/sysmon\/config\/winlogbeat-sysmon.js'
       line: '  - name: Microsoft-Windows-PowerShell/Operational'
       state: present
       backup: yes
@@ -431,3 +431,4 @@
 #      name: filebeat
 #      start_mode: auto
 #      state: started
+#
