@@ -80,6 +80,13 @@
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\auditbeat\\tools
 ############### Config Filebeat ###################### 
+  - name: "Edit path monitoring logs"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
+       regexp: '^#- c:\\programdata\\elasticsearch\\logs\\\*'
+       insertafter: '^    #- c:\\programdata\\elasticsearch\\logs\\\*'
+       line: "    - c:\\windows\\system32\\winevt\\logs\\*"
+       backup: yes
   - name: "Active config logs"
     win_lineinfile:
        path: C:\ProgramData\chocolatey\lib\filebeat\tools\filebeat.yml
@@ -225,7 +232,29 @@
      -E output.logstash.enabled=false `
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
-############### Config Packetbeat ####################  
+  - name: Enable modules windows metricbeat
+    win_shell: .\metricbeat.exe modules enable windows  chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
+#################### Edit modules metricbeat ###################
+  - name: "Edit #- entropy module system"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\modules.d\system.yml
+       regexp: '    #- entropy'
+       line: "    - entropy"
+       backup: yes
+  - name: "Edit #- core module system"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\modules.d\system.yml
+       regexp: '    #- core'
+       line: "    - core"
+       backup: yes
+  - name: "Edit #- diskio module system"
+    win_lineinfile:
+       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\modules.d\system.yml
+       regexp: '    #- diskio'
+       line: "    - diskio"
+       backup: yes
+  
+    ############### Config Packetbeat ####################  
   - name: Add tags to agent packetbeat
     win_lineinfile:
       path: C:\ProgramData\chocolatey\lib\packetbeat\tools\packetbeat.yml
@@ -406,6 +435,16 @@
 #      name: Sysmon64
 #      start_mode: auto
 #      state: started
+
+######   SQL SERVER ################
+
+- hosts: windows,sql-servers
+  tasks:
+  - name: Enable modules mssql metricbeat
+    win_shell: .\metricbeat.exe modules enable mssql  chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
+
+
+################# OTROS #####################
 ##################### ALL HOSTS #################
 #- hosts: windows
 #  tasks:

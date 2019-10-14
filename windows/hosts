@@ -1,3 +1,9 @@
 [windows]
 10.20.21.203
 lap-cfviera.bigniss.cl
+
+[Domain-Servers]
+ad01.bigniss.cl
+ad02.bigniss.cl
+
+[sql-servers]
