@@ -235,12 +235,6 @@
   - name: Enable modules windows metricbeat
     win_shell: .\metricbeat.exe modules enable windows  chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
 #################### Edit modules metricbeat ###################
-  - name: "Edit #- entropy module system"
-    win_lineinfile:
-       path: C:\ProgramData\chocolatey\lib\metricbeat\tools\modules.d\system.yml
-       regexp: '    #- entropy'
-       line: "    - entropy"
-       backup: yes
   - name: "Edit #- core module system"
     win_lineinfile:
        path: C:\ProgramData\chocolatey\lib\metricbeat\tools\modules.d\system.yml
