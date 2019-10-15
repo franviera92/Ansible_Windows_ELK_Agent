@@ -1,0 +1,34 @@
+---
+- hosts: windows,sysaid
+  tasks:
+  - name: Delete service Auditbeat
+    win_shell: .\uninstall-service-auditbeat.ps1   chdir=C:\\ProgramData\\chocolatey\\lib\\auditbeat\\tools
+      state: absent
+  - name: Remove directory auditbeat
+    win_file:
+      path: C:\ProgramData\chocolatey\lib\auditbeat
+      state: absent
+  - name: Delete service Filebeat
+    win_shell: .\uninstall-service-filebeat.ps1   chdir=C:\\ProgramData\\chocolatey\\lib\\filebeat\\tools
+  - name: Remove directory filebeat
+    win_file:
+      path: C:\ProgramData\chocolatey\lib\filebeat
+      state: absent
+  - name: Delete service Metricbeat
+    win_shell: .\uninstall-service-metricbeat.ps1   chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
+  - name: Remove directory metricbeat
+    win_file:
+      path: C:\ProgramData\chocolatey\lib\metricbeat
+      state: absent
+  - name: Delete service Packetbeat
+    win_shell: .\uninstall-service-packetbeat.ps1   chdir=C:\\ProgramData\\chocolatey\\lib\\packetbeat\\tools
+  - name: Remove directory packetbeat
+    win_file:
+      path: C:\ProgramData\chocolatey\lib\packetbeat
+      state: absent
+  - name: Delete service Winlogbeat
+    win_shell: .\uninstall-service-winlogbeat.ps1   chdir=C:\\ProgramData\\chocolatey\\lib\\winlogbeat\\tools
+  - name: Remove directory winlogbeat
+    win_file:
+      path: C:\ProgramData\chocolatey\lib\winlogbeat
+      state: absent

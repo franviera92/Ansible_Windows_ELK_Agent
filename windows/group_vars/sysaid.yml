@@ -1,0 +1,9 @@
+# file: group_vars/windows.yml
+# command to encrypt ansible-vault encrypt windows.yml
+#command to view file encrypt ansible-vault view /root/windows/group_vars/windows.yml
+# ansible-playbook test.yml -vvvv --ask-vault-pass
+# ansible-playbook -i /root/windows test.yml -vvvv --ask-vault-pass
+ansible_user: administrador
+ansible_password: password
+ansible_connection: winrm
+ansible_winrm_server_cert_validation: ignore

@@ -1,5 +1,5 @@
 ---
-- hosts: windows
+- hosts: windows,sysaid
   tasks:
   - name: run netstat and return Ethernet stats
     win_command: netstat -e
@@ -403,7 +403,7 @@
      -E output.elasticsearch.hosts=['10.10.10.245:9200'] `
      -E setup.kibana.host=10.10.10.245:5601 chdir=C:\\ProgramData\\chocolatey\\lib\\winlogbeat\\tools
 ##################### ALL HOSTS #################
-- hosts: windows
+- hosts: windows,sysaid
   tasks:
   - name: Start Auditbeat
     win_service:
@@ -442,6 +442,13 @@
   tasks:
   - name: Enable modules mssql metricbeat
     win_shell: .\metricbeat.exe modules enable mssql  chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
+
+######   MYSQL SERVER ################
+
+- hosts: sysaid
+  tasks:
+  - name: Enable modules mysql metricbeat
+    win_shell: .\metricbeat.exe modules enable mysql  chdir=C:\\ProgramData\\chocolatey\\lib\\metricbeat\\tools
 
 
 ################# OTROS #####################

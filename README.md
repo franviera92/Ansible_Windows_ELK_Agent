@@ -31,6 +31,29 @@ Para ver los escuchas actuales que se ejecutan en el servicio WinRM, ejecute el 
 
 winrm enumerate winrm/config/Listener
 
+#En produccion
+
+Edite el archivo windows.yml
+
+    group_vars / all.yml
+
+ #Configurar hosts de Windows
+ 
+ Nuestros hosts de Windows deben configurarse antes de ejecutar cualquier comando en él. El siguiente script de PowerShell servirá:
+ 
+ - Cree el usuario Ansible que definimos en all.yml
+ - Agregar el usuario al grupo Administradores
+ - Establezca la autenticación WinRM en básica y permita conexiones sin cifrar
+ - Agregue la regla de Firewall para WinRM con la dirección IP de su máquina de control Ansible
+ - Abra PowerShell en el host y ejecute el script:
+
+    NET USER ansible_user "your_password_here" /ADD
+    NET LOCALGROUP "Administrators" "ansible_user" /ADD
+    Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
+    Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
+    netsh advfirewall firewall add rule name="Allow WinRM HTTPS - Ansible" dir=in action=allow protocol=TCP localport=5986 remoteip=10.XX.XX.XX
+    eliminar la regla de firewall Allow WinRM HTTPS creada por ConfigureRemotingForAnsible.ps1 anteriormente
+    
 2. Ingresamos al servidor ansible y a la carpeta donde se encuentran los playbooks a ejecutar:
 
     cd /user/Ansible_Windows_ELK_Agent\windows
