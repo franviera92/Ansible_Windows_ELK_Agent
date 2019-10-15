@@ -35,7 +35,7 @@ winrm enumerate winrm/config/Listener
 
 Edite el archivo windows.yml
 
-    group_vars / all.yml
+    group_vars / grupodehost.yml
 
  #Configurar hosts de Windows
  
